@@ -3,13 +3,13 @@
 ## Group Information
 * **Group Name:** Lanka Explorer - Chamath
 * **Project Tagline:** Discover the Pearl of the Indian Ocean
-* **Code Sharing Method:** GitHub Repository / Google Drive
+* **Code Sharing Method:** GitHub Repository 
 
 ## Group Members & Roles
 * **Chamath Hirushan** – Project Lead (Planning, folder structure, merging work)
-* **Team Member 2** – Content Lead (Text, images, destination research)
-* **Team Member 3** – Data Lead (JSON data, APIs validation)
-* **Team Member 4** – UI Lead (Layout, header, navigation, footer)
+*                      – Content Lead (Text, images, destination research)
+*                      – Data Lead (JSON data, APIs validation)
+*                      – UI Lead (Layout, header, navigation, footer)
 
 ## Featured Destinations
 1. Sigiriya Rock Fortress (Heritage)
