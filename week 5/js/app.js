@@ -9,7 +9,27 @@ if (menuToggle && nav) {
     menuToggle.setAttribute('aria-expanded', isOpen);
   });
 }
+// ===== 1b. DARK MODE =====
+const THEME_KEY = 'lankaExplorerTheme';
+const themeToggle = document.querySelector('.theme-toggle');
 
+function applyTheme(theme) {  
+  if (theme === 'dark') {    
+    document.body.classList.add('dark');    
+    themeToggle.textContent = 'Light mode';  
+  } else {    
+    document.body.classList.remove('dark');    
+    themeToggle.textContent = 'Dark mode';  
+  }
+}
+
+themeToggle.addEventListener('click', function () {  
+  const newTheme = document.body.classList.contains('dark') ? 'light' : 'dark';  
+  localStorage.setItem(THEME_KEY, newTheme);  
+  applyTheme(newTheme);
+});
+
+applyTheme(localStorage.getItem(THEME_KEY) || 'light');
 // ===== 2. LOAD DATA =====
 async function loadDestinations() {
   const response = await fetch('data/destinations.json');
@@ -308,7 +328,71 @@ function showAllDestinationsMap(destinations) {
     map.fitBounds(points, { padding: [30, 30] });   
   }
 }
+// ===== 5e. MY TRIP STORAGE (localStorage) =====
+const TRIP_KEY = 'lankaExplorerTrip';
+const TRAVELLERS_KEY = 'lankaExplorerTravellers';
 
+function getTrip() {  
+  const saved = localStorage.getItem(TRIP_KEY);  
+  if (saved === null) {    
+    return [];  
+  }  
+  return JSON.parse(saved);
+}
+
+function saveTrip(trip) {  
+  localStorage.setItem(TRIP_KEY, JSON.stringify(trip));  
+  updateTripCount();
+}
+
+function isInTrip(id) {  
+  return getTrip().includes(id);
+}
+
+function addToTrip(id) {  
+  const trip = getTrip();  
+  if (!trip.includes(id)) {    
+    trip.push(id);    
+    saveTrip(trip);  
+  }
+}
+
+function removeFromTrip(id) {  
+  const trip = getTrip().filter(tripId => tripId !== id);  
+  saveTrip(trip);
+}
+
+function updateTripCount() {  
+  const link = document.querySelector('nav a[href="trip.html"]');  
+  if (!link) return;  
+  const count = getTrip().length;  
+  if (count > 0) {    
+    link.textContent = `My Trip (${count})`;  
+  } else {    
+    link.textContent = 'My Trip';  }
+}
+function setupTripButton(place) {  
+  const button = document.querySelector('#add-to-trip');  
+  if (!button) return;  
+  
+  function refreshButton() {    
+    if (isInTrip(place.id)) {      
+      button.textContent = '✓ In My Trip (click to remove)';      
+      button.classList.add('added');    
+    } else {      
+      button.textContent = 'Add to My Trip';      
+      button.classList.remove('added');    }  
+  }  
+  
+  button.addEventListener('click', function () {    
+    if (isInTrip(place.id)) {      
+      removeFromTrip(place.id);    } else {      
+      addToTrip(place.id);    }    
+    refreshButton();  
+  });  
+  
+  refreshButton();
+}
 // ===== 6. DETAILS PAGE =====
 async function initDetailsPage() {
   const container = document.querySelector('#destination');
@@ -349,13 +433,101 @@ async function initDetailsPage() {
     showWeather(place);
     showFeeInLkr(place);
     showMap(place);
+    
+    setupTripButton(place);
 
   } catch (error) {
     showError(container, 'Sorry, this destination could not be loaded.');
     console.error(error);
   }
 }
-
+// ===== 6b. MY TRIP PAGE =====
+async function initTripPage() {  
+  const tableBody = document.querySelector('#trip-table tbody');  
+  if (!tableBody) return;   
+  
+  const summary = document.querySelector('#trip-summary');  
+  const travellersInput = document.querySelector('#travellers');  
+  const totalUsdCell = document.querySelector('#total-usd');  
+  const totalLkrCell = document.querySelector('#total-lkr');  
+  const clearButton = document.querySelector('#clear-trip');  
+  
+  showLoading(summary, 'Loading your trip...');  
+  
+  let allDestinations = [];  
+  try {    
+    allDestinations = await loadDestinations();  
+  } catch (error) {    
+    showError(summary, 'Sorry, your trip could not be loaded.');    
+    console.error(error);    
+    return;  }  
+  
+  let rate = null;  
+  try {    
+    rate = await getUsdToLkrRate();  
+  } catch (error) {    
+    console.error(error);  
+  }  
+  
+  travellersInput.value = localStorage.getItem(TRAVELLERS_KEY) || 1;  
+  
+  function renderTrip() {    
+    const tripIds = getTrip();    
+    const places = allDestinations.filter(place => tripIds.includes(place.id));    
+    const travellers = Math.max(1, Number(travellersInput.value) || 1);    
+    
+    tableBody.innerHTML = '';    
+    if (places.length === 0) {      
+      tableBody.innerHTML = `        
+        <tr>          
+          <td colspan="5" class="no-results">            
+            Your trip is empty. <a href="destinations.html">Browse destinations</a> to add some.          
+          </td>        
+        </tr>      `;    
+    }    
+    
+    let totalPerPerson = 0;    
+    for (const place of places) {      
+      totalPerPerson += place.entryFeeUSD;      
+      const row = document.createElement('tr');      
+      row.innerHTML = `        
+        <td><a href="details.html?id=${place.id}">${place.name}</a></td>        
+        <td><span class="badge ${getCategoryClass(place.category)}">${place.category}</span></td>        
+        <td>${formatFee(place.entryFeeUSD)}</td>        
+        <td>${rate ? formatLkr(place.entryFeeUSD * rate) : '–'}</td>        
+        <td><button type="button" class="remove-btn" data-id="${place.id}">Remove</button></td>      
+      `;      
+      tableBody.appendChild(row);    
+    }    
+    
+    const groupTotal = totalPerPerson * travellers;    
+    totalUsdCell.textContent = 'USD ' + groupTotal;    
+    totalLkrCell.textContent = rate ? formatLkr(groupTotal * rate) : 'Unavailable';    
+    summary.textContent = `${places.length} destination(s) for ${travellers} traveller(s).`;    
+    
+    if (rate) {      
+      summary.textContent += ` Exchange rate used: 1 USD = Rs. ${rate.toFixed(2)}.`;    
+    }    
+    clearButton.hidden = places.length === 0;  
+  }  
+  
+  tableBody.addEventListener('click', function (event) {    
+    if (event.target.classList.contains('remove-btn')) {      
+      const id = Number(event.target.dataset.id);      
+      removeFromTrip(id);      
+      renderTrip();    }  });  
+  
+  travellersInput.addEventListener('input', function () {    
+    localStorage.setItem(TRAVELLERS_KEY, travellersInput.value);    
+    renderTrip();  });  
+  
+  clearButton.addEventListener('click', function () {    
+    if (confirm('Remove every destination from your trip?')) {      
+      saveTrip([]);      
+      renderTrip();    }  });  
+  
+  renderTrip();
+}
 // ===== 7. ENQUIRY FORM =====
 function initEnquiryForm() {
   const form = document.querySelector('#enquiry-form');
@@ -405,3 +577,5 @@ initHomePage();
 initDestinationsPage();
 initDetailsPage();
 initEnquiryForm();
+updateTripCount();
+initTripPage();

@@ -9,7 +9,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap"
+        rel="stylesheet">
 
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -25,38 +27,40 @@
                 <li><a href="destinations.html">Destinations</a></li>
                 <li><a href="trip.html" class="active">My Trip</a></li>
                 <li><a href="about.html">About</a></li>
+                <li><button class="theme-toggle" type="button">Dark mode</button></li>
             </ul>
         </nav>
     </header>
 
     <main>
         <h1>My Trip</h1>
+        <div id="trip-summary"></div>
+        <label for="travellers">Number of travellers</label>
+        <input type="number" id="travellers" min="1" max="20" value="1">
         <table id="trip-table">
             <thead>
                 <tr>
                     <th>Destination</th>
                     <th>Category</th>
-                    <th>Entry Fee (USD)</th>
-                    <th>Entry Fee (LKR)</th>
+                    <th>Fee per person (USD)</th>
+                    <th>Fee per person (LKR)</th>
                     <th>Remove</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Rows will be added by JavaScript in Week 05 -->
+                <!-- Rows are created by JavaScript -->
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="2">Total</td>
-                    <td id="total-usd">0</td>
-                    <td id="total-lkr">0</td>
+                    <td colspan="2">Total for all travellers</td>
+                    <td id="total-usd">USD 0</td>
+                    <td id="total-lkr">Rs. 0</td>
                     <td></td>
                 </tr>
             </tfoot>
         </table>
-        <label for="travellers">Number of travellers</label>
-        <input type="number" id="travellers" min="1" value="1">
+        <button id="clear-trip" type="button">Clear trip</button>
     </main>
-
     <footer>
         <p>&copy; 2026 Lanka Explorer – Lanka Explorer - Chamath. All rights reserved.</p>
         <p>Contact: <a href="mailto:hello@lankaexplorer.lk">hello@lankaexplorer.lk</a></p>
