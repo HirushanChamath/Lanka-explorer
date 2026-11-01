@@ -8,7 +8,7 @@
     "image": "images/sigiriya_rock_fortress.jpg",
     "lat": 7.9570,
     "lng": 80.7603,
-    "entryFeeUSD": 36,
+    "entryFeeUSD": 5,
     "bestTime": "January to April",
     "featured": true
   },
@@ -34,7 +34,7 @@
     "image": "images/sri_dalada_maligawa.jpg",
     "lat": 7.2936,
     "lng": 80.6417,
-    "entryFeeUSD": 10,
+    "entryFeeUSD": 5,
     "bestTime": "December to April",
     "featured": true
   },
@@ -86,7 +86,7 @@
     "image": "images/yala_national_park.jpg",
     "lat": 6.3746,
     "lng": 81.3967,
-    "entryFeeUSD": 25,
+    "entryFeeUSD": 4,
     "bestTime": "February to July",
     "featured": false
   },
@@ -99,7 +99,7 @@
     "image": "images/minneriya_national_park.jpg",
     "lat": 8.0315,
     "lng": 80.8690,
-    "entryFeeUSD": 25,
+    "entryFeeUSD": 6,
     "bestTime": "July to October",
     "featured": false
   },

@@ -20,7 +20,19 @@ async function loadDestinations() {
   return destinations;
 }
 
-// ===== 3. HELPER FUNCTIONS =====
+// ===== 3. HELPER FUNCTIONS (Loading, Errors & Formatting) =====
+function showLoading(element, text) {  
+  element.innerHTML = `    
+    <div class="loading">      
+      <span class="spinner"></span>      
+      <span>${text}</span>    
+    </div>  `;
+}
+
+function showError(element, text) {  
+  element.innerHTML = `<p class="error">${text}</p>`;
+}
+
 function formatFee(fee) {
   if (fee === 0) {
     return 'Free';
@@ -88,7 +100,7 @@ async function initHomePage() {
   }
 }
 
-// ===== 5. DESTINATIONS PAGE =====
+// ===== 5. DESTINATIONS PAGE & MAP =====
 async function initDestinationsPage() {
   const list = document.querySelector('#destination-list');
   if (!list) return;
@@ -96,18 +108,26 @@ async function initDestinationsPage() {
   const categorySelect = document.querySelector('#category');
   const sortSelect = document.querySelector('#sort');
   const resultCount = document.querySelector('#result-count');
+  
+  showLoading(list, 'Loading destinations...');
+  
   let allDestinations = [];
   try {
     allDestinations = await loadDestinations();
   } catch (error) {
-    list.innerHTML = '<p class="error">Sorry, destinations could not be loaded. Please try again later.</p>';
+    showError(list, 'Sorry, destinations could not be loaded. Please try again later.');
     console.error(error);
     return;
   }
+
+  // Show all destinations map
+  showAllDestinationsMap(allDestinations);
+
   function updateList() {
-    const searchText = searchInput.value.trim().toLowerCase();
-    const category = categorySelect.value;
-    const sortBy = sortSelect.value;
+    const searchText = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const category = categorySelect ? categorySelect.value : 'all';
+    const sortBy = sortSelect ? sortSelect.value : 'name';
+    
     const results = allDestinations.filter(function (place) {
       const matchesSearch =
         place.name.toLowerCase().includes(searchText) ||
@@ -115,6 +135,7 @@ async function initDestinationsPage() {
       const matchesCategory = category === 'all' || place.category === category;
       return matchesSearch && matchesCategory;
     });
+    
     if (sortBy === 'name') {
       results.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'fee-low') {
@@ -122,6 +143,7 @@ async function initDestinationsPage() {
     } else if (sortBy === 'fee-high') {
       results.sort((a, b) => b.entryFeeUSD - a.entryFeeUSD);
     }
+    
     list.innerHTML = '';
     if (results.length === 0) {
       list.innerHTML = '<p class="no-results">No destinations match your search.</p>';
@@ -134,16 +156,166 @@ async function initDestinationsPage() {
       resultCount.textContent = `Showing ${results.length} of ${allDestinations.length} destinations`;
     }
   }
+  
   if (searchInput) searchInput.addEventListener('input', updateList);
   if (categorySelect) categorySelect.addEventListener('change', updateList);
   if (sortSelect) sortSelect.addEventListener('change', updateList);
   updateList();
 }
 
+// ===== 5b. API: WEATHER (Open-Meteo) =====
+function describeWeather(code) {  
+  if (code === 0) {    
+    return 'Clear sky';  
+  } else if (code <= 3) {    
+    return 'Partly cloudy';  
+  } else if (code === 45 || code === 48) {    
+    return 'Foggy';  
+  } else if (code >= 51 && code <= 57) {    
+    return 'Drizzle';  
+  } else if (code >= 61 && code <= 67) {    
+    return 'Rain';  
+  } else if (code >= 80 && code <= 82) {    
+    return 'Rain showers';  
+  } else if (code >= 95) {    
+    return 'Thunderstorm';  
+  } else {    
+    return 'Mixed conditions';  
+  }
+}
+
+async function showWeather(place) {  
+  const box = document.querySelector('#weather');  
+  if (!box) return;  
+  showLoading(box, 'Loading weather...');
+  const url = 'https://api.open-meteo.com/v1/forecast'    
+    + `?latitude=${place.lat}&longitude=${place.lng}`    
+    + '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code'    
+    + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'    
+    + '&timezone=Asia%2FColombo&forecast_days=3';  
+  try {    
+    const response = await fetch(url);    
+    if (!response.ok) {      
+      throw new Error('Weather API error (status ' + response.status + ')');    
+    }    
+    const data = await response.json();    
+    const current = data.current;    
+    const daily = data.daily;    
+    
+    let forecastHtml = '';    
+    for (let i = 0; i < daily.time.length; i++) {      
+      const dayName = new Date(daily.time[i]).toLocaleDateString('en-GB', {        
+        weekday: 'short', day: 'numeric', month: 'short'      
+      });      
+      forecastHtml += `        
+        <div class="forecast-day">          
+          <strong>${dayName}</strong>          
+          <p>${describeWeather(daily.weather_code[i])}</p>          
+          <p>${Math.round(daily.temperature_2m_max[i])}° / ${Math.round(daily.temperature_2m_min[i])}°C</p>          
+          <p>Rain: ${daily.precipitation_probability_max[i]}%</p>        
+        </div>      `;    
+    }    
+    box.innerHTML = `      
+      <div class="weather-now">        
+        <p class="temp">${Math.round(current.temperature_2m)}°C</p>        
+        <p>${describeWeather(current.weather_code)}</p>        
+        <p>Humidity ${current.relative_humidity_2m}% · Wind ${current.wind_speed_10m} km/h</p>      
+      </div>      
+      <div class="forecast">${forecastHtml}</div>    `;  
+  } catch (error) {    
+    showError(box, 'Weather is unavailable right now. Please try again later.'); 
+    console.error(error);  
+  }
+}
+
+// ===== 5c. API: CURRENCY (Frankfurter) =====
+let usdToLkrRate = null;   
+
+async function getUsdToLkrRate() {  
+  if (usdToLkrRate !== null) {    
+    return usdToLkrRate;   
+  }  
+  const response = await fetch('https://api.frankfurter.dev/v2/rate/usd/lkr');  
+  if (!response.ok) {    
+    throw new Error('Currency API error (status ' + response.status + ')');  
+  }  
+  const data = await response.json();  
+  usdToLkrRate = data.rate;  
+  return usdToLkrRate;
+}
+
+function formatLkr(amount) {  
+  return 'Rs. ' + Math.round(amount).toLocaleString('en-LK');
+}
+
+async function showFeeInLkr(place) {  
+  const feeBox = document.querySelector('#fee-lkr');  
+  if (!feeBox || place.entryFeeUSD === 0) return;   
+  try {    
+    const rate = await getUsdToLkrRate();    
+    feeBox.textContent = ` ≈ ${formatLkr(place.entryFeeUSD * rate)}`;  
+  } catch (error) {    
+    feeBox.textContent = '';   
+    console.error(error);  
+  }
+}
+
+// ===== 5d. API: MAPS (Leaflet + OpenStreetMap) =====
+function addBaseLayer(map) {  
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {    
+    maxZoom: 19,    
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'  
+  }).addTo(map);
+}
+
+function showMap(place) {  
+  const mapBox = document.querySelector('#map');  
+  if (!mapBox) return;  
+  if (typeof L === 'undefined') {   
+    mapBox.textContent = 'The map could not be loaded.';    
+    return;  
+  }  
+  mapBox.textContent = '';   
+  const map = L.map('map').setView([place.lat, place.lng], 13);  
+  addBaseLayer(map);  
+  L.marker([place.lat, place.lng])    
+    .addTo(map)    
+    .bindPopup(`<strong>${place.name}</strong><br>${place.district} District`)    
+    .openPopup();
+}
+
+function showAllDestinationsMap(destinations) {  
+  const mapBox = document.querySelector('#all-map');  
+  if (!mapBox) return;  
+  if (typeof L === 'undefined') {    
+    mapBox.textContent = 'The map could not be loaded.';    
+    return;  
+  }  
+  const map = L.map('all-map');  
+  addBaseLayer(map);  
+  const points = [];  
+  for (const place of destinations) {    
+    L.marker([place.lat, place.lng])      
+      .addTo(map)      
+      .bindPopup(`        
+        <strong>${place.name}</strong><br>        
+        ${place.category}<br>        
+        <a href="details.html?id=${place.id}">View details</a>      
+      `);    
+    points.push([place.lat, place.lng]);  
+  }  
+  if (points.length > 0) {
+    map.fitBounds(points, { padding: [30, 30] });   
+  }
+}
+
 // ===== 6. DETAILS PAGE =====
 async function initDetailsPage() {
   const container = document.querySelector('#destination');
   if (!container) return;
+  
+  showLoading(container, 'Loading destination...');
+  
   const params = new URLSearchParams(window.location.search);
   const id = Number(params.get('id'));
   try {
@@ -168,12 +340,18 @@ async function initDetailsPage() {
       <h2>Quick Facts</h2>
       <ul>
         <li><strong>Best time to visit:</strong> ${place.bestTime}</li>
-        <li><strong>Entry fee:</strong> ${formatFee(place.entryFeeUSD)} (${getPriceLabel(place.entryFeeUSD)})</li>
+        <li><strong>Entry fee:</strong> ${formatFee(place.entryFeeUSD)}<span id="fee-lkr"></span> (${getPriceLabel(place.entryFeeUSD)})</li>
         <li><strong>Coordinates:</strong> ${place.lat}, ${place.lng}</li>
       </ul>
     `;
+    
+    // Call Week 04 API functions
+    showWeather(place);
+    showFeeInLkr(place);
+    showMap(place);
+
   } catch (error) {
-    container.innerHTML = '<p class="error">Sorry, this destination could not be loaded.</p>';
+    showError(container, 'Sorry, this destination could not be loaded.');
     console.error(error);
   }
 }
@@ -222,6 +400,7 @@ function initEnquiryForm() {
   });
 }
 
+// ===== 8. START THE APP =====
 initHomePage();
 initDestinationsPage();
 initDetailsPage();
