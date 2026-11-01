@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Browse all destinations across Sri Lanka with Lanka Explorer.">
+    <title>Lanka Explorer | Destinations</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+
+<body>
+
+    <header>
+        <a href="index.html" class="logo">Lanka Explorer</a>
+        <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">&#9776;</button>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="destinations.html" class="active">Destinations</a></li>
+                <li><a href="trip.html">My Trip</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="page-title">
+            <h1>All Destinations</h1>
+            <p>Find your next adventure across Sri Lanka.</p>
+        </section>
+        <section id="controls">
+            <label for="search">Search</label>
+            <input type="search" id="search" placeholder="e.g. Ella">
+            <label for="category">Category</label>
+            <select id="category">
+                <option value="all">All</option>
+                <option value="Heritage">Heritage</option>
+                <option value="Beach">Beach</option>
+                <option value="Nature">Nature</option>
+                <option value="Wildlife">Wildlife</option>
+            </select>
+            <label for="sort">Sort by</label>
+            <select id="sort">
+                <option value="name">Name (A–Z)</option>
+                <option value="fee-low">Entry fee (low to high)</option>
+                <option value="fee-high">Entry fee (high to low)</option>
+            </select>
+        </section>
+        <section id="controls">
+        </section>
+
+        <p id="result-count"></p>
+        <section id="destination-list">  
+            <p class="no-results">Loading destinations...</p>
+        </section>
+        <section id="map-section">  
+            <h2>Explore on the Map</h2>  
+            <div id="all-map"></div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 Lanka Explorer – Lanka Explorer - Chamath. All rights reserved.</p>
+        <p>Contact: <a href="mailto:hello@lankaexplorer.lk">hello@lankaexplorer.lk</a></p>
+    </footer>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Plan your custom trip and budget around Sri Lanka.">
+    <title>Lanka Explorer | My Trip</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <a href="index.html" class="logo">Lanka Explorer</a>
+        <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">&#9776;</button>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="destinations.html">Destinations</a></li>
+                <li><a href="trip.html" class="active">My Trip</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h1>My Trip</h1>
+        <table id="trip-table">
+            <thead>
+                <tr>
+                    <th>Destination</th>
+                    <th>Category</th>
+                    <th>Entry Fee (USD)</th>
+                    <th>Entry Fee (LKR)</th>
+                    <th>Remove</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be added by JavaScript in Week 05 -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2">Total</td>
+                    <td id="total-usd">0</td>
+                    <td id="total-lkr">0</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <label for="travellers">Number of travellers</label>
+        <input type="number" id="travellers" min="1" value="1">
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Lanka Explorer – Lanka Explorer - Chamath. All rights reserved.</p>
+        <p>Contact: <a href="mailto:hello@lankaexplorer.lk">hello@lankaexplorer.lk</a></p>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
